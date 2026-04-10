@@ -32,7 +32,6 @@ Project Structure
 chatbot/
 ├── src/
 │   └── chatbot.py   # Main chatbot logic
-├── .env.example     # Example environment file
 ├── .gitignore
 ├── pyproject.toml   # Project dependencies
 ├── uv.lock
