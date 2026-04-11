@@ -23,7 +23,7 @@ import sys
 from src.chatbot import main
 from src.rag import build_vectorstore, load_vectorstore
 
-# Path where the ChromaDB vector database is stored
+# Path where the ChromaDB vector database is stored on disk
 DB_PATH = "data/chroma_db"
 
 
@@ -50,12 +50,18 @@ if __name__ == "__main__":
     check_python_version()
     print_banner()
 
-    # Build the vector store if it doesn't exist yet, otherwise load it
+    # Build the vector store if it doesn't exist yet (first run),
+    # otherwise load the existing one from disk to save time.
     if not os.path.exists(DB_PATH):
         print("Building vector database from medical documents...")
+        print("This may take several minutes on the first run.\n")
         vectorstore = build_vectorstore()
         print("Done.\n")
     else:
+        # Loading the vector store takes a few seconds because the
+        # embedding model (all-MiniLM-L6-v2) must be loaded into memory.
+        print("Loading medical knowledge base, please wait...")
         vectorstore = load_vectorstore()
+        print("Ready.\n")
 
     main(vectorstore)
