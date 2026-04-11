@@ -16,7 +16,7 @@ A powerful **command-line medical chatbot** built with the Mistral AI API and en
 
 ## Requirements
 
-- Python 3.8+
+- Python 3.10+
 - [`uv`](https://github.com/astral-sh/uv) package manager
 - A Mistral API key → https://console.mistral.ai
 
@@ -47,6 +47,9 @@ cd ..
 
 # Convert XML files to plain text
 uv run src/prepare_data.py
+
+# Build the vector database
+uv run src/rag.py
 ```
 
 ---
@@ -86,6 +89,7 @@ chatbot/
 ├── data/
 │   ├── MedQuAD/          # MedQuAD dataset
 │   ├── medical_docs/     # Processed text files
+│   └── chroma_db/        # Vector database
 ├── src/
 │   ├── chatbot.py        # Chat logic
 │   ├── rag.py            # RAG pipeline
@@ -100,9 +104,9 @@ chatbot/
 
 ## Data Source
 
-This project uses the **MedQuAD dataset**
+This project uses the [MedQuAD dataset](https://github.com/abachaa/MedQuAD)
 by *Asma Ben Abacha* and *Dina Demner-Fushman*,
-licensed under **CC BY 4.0**.
+licensed under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).
 
 ---
 

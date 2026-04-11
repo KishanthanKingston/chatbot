@@ -14,18 +14,23 @@
 #
 # Description
 # -----------
-# Interactive command-line chatbot powered by the Mistral API with
-# conversation memory support.
+# Entry point for the Mistral Medical Chatbot CLI.
+# Handles Python version check, banner display,
+# and vector store initialization before starting the chatbot.
 
-
+import os
 import sys
 from src.chatbot import main
+from src.rag import build_vectorstore, load_vectorstore
+
+# Path where the ChromaDB vector database is stored
+DB_PATH = "data/chroma_db"
 
 
 def check_python_version():
-    """Ensure the script is running with Python 3.8 or higher."""
-    if sys.version_info < (3, 8):
-        print("Error: Python 3.8 or higher is required.")
+    """Ensure the script is running with Python 3.10 or higher."""
+    if sys.version_info < (3, 10):
+        print("Error: Python 3.10 or higher is required.")
         sys.exit(1)
 
 
@@ -44,4 +49,13 @@ def print_banner():
 if __name__ == "__main__":
     check_python_version()
     print_banner()
-    main()
+
+    # Build the vector store if it doesn't exist yet, otherwise load it
+    if not os.path.exists(DB_PATH):
+        print("Building vector database from medical documents...")
+        vectorstore = build_vectorstore()
+        print("Done.\n")
+    else:
+        vectorstore = load_vectorstore()
+
+    main(vectorstore)

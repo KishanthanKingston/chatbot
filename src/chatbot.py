@@ -15,14 +15,14 @@
 # Description
 # -----------
 # Interactive command-line chatbot powered by the Mistral API with
-# conversation memory support.
+# conversation memory support and RAG pipeline.
 
 
 import os
 import sys
 from mistralai import Mistral
-
 from dotenv import load_dotenv
+from src.rag import get_context
 
 # Load environment variables from the .env file into os.environ,
 # so os.environ.get("MISTRAL_API_KEY") can find the key automatically
@@ -48,7 +48,6 @@ def create_client():
     SystemExit
         If the ``MISTRAL_API_KEY`` environment variable is not set.
     """
-
     api_key = os.environ.get("MISTRAL_API_KEY")
     if not api_key:
         print("Error: MISTRAL_API_KEY environment variable is missing.")
@@ -57,13 +56,14 @@ def create_client():
     return Mistral(api_key=api_key)
 
 
-def chat(client, history, user_input):
+def chat(client, history, user_input, vectorstore):
     """
     Send a conversation history to the Mistral API and return the assistant's reply.
 
-    The function appends the user's input to the conversation history, sends the
-    full history to the API, and then appends the assistant's response to maintain
-    conversational context across multiple turns.
+    The function retrieves relevant medical context from the vector store,
+    injects it into the user message, appends it to the conversation history,
+    sends the full history to the API, and then appends the assistant's response
+    to maintain conversational context across multiple turns.
 
     Parameters
     ----------
@@ -75,6 +75,8 @@ def chat(client, history, user_input):
         "content" (str).
     user_input : str
         The user's input message.
+    vectorstore : Chroma
+        The vector store used to retrieve relevant medical context.
 
     Returns
     -------
@@ -86,8 +88,20 @@ def chat(client, history, user_input):
     Exception
         Propagates any exception raised by the API call.
     """
-    # Add the user's message to the history before sending
-    history.append({"role": "user", "content": user_input})
+    # Retrieve relevant medical context from the vector store
+    context = get_context(vectorstore, user_input)
+
+    # Inject the context into the user message so the model can use it
+    augmented_input = f"""Use the following medical information to answer the question.
+If the context is not relevant, rely on your general medical knowledge.
+
+Context:
+{context}
+
+Question: {user_input}"""
+
+    # Add the augmented message to the history before sending
+    history.append({"role": "user", "content": augmented_input})
 
     response = client.chat.complete(
         model="mistral-small-latest",
@@ -103,13 +117,18 @@ def chat(client, history, user_input):
     return reply
 
 
-def main():
+def main(vectorstore):
     """
     Run an interactive command-line chatbot using the Mistral API.
 
     This function initializes the client, sets up the initial system prompt,
     and enters a loop to handle user input. Special commands allow the user to
     exit the program or reset the conversation history.
+
+    Parameters
+    ----------
+    vectorstore : Chroma
+        The vector store used to retrieve relevant medical context.
 
     Notes
     -----
@@ -120,7 +139,6 @@ def main():
     The chatbot maintains context by sending the full conversation history
     with each API request.
     """
-
     client = create_client()
 
     # The system message sets the assistant's behavior for the whole conversation.
@@ -145,7 +163,7 @@ def main():
         }
     ]
 
-    print("=== Mistral Chatbot ===")
+    print("=== Mistral Medical Chatbot ===")
     print("Type 'exit' or 'quit' to quit, 'reset' to clear history.\n")
 
     while True:
@@ -171,7 +189,7 @@ def main():
             continue
 
         try:
-            reply = chat(client, history, user_input)
+            reply = chat(client, history, user_input, vectorstore)
             print(f"\nAssistant: {reply}\n")
         except Exception as e:
             # Catch API errors (network issues, invalid key, rate limits…)
@@ -182,4 +200,6 @@ def main():
 if __name__ == "__main__":
     # Only run main() when the script is executed directly,
     # not when imported as a module
-    main()
+    from src.rag import load_vectorstore
+
+    main(load_vectorstore())

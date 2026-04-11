@@ -1,13 +1,20 @@
 [project]
 name = "chatbot"
 version = "0.1.0"
-description = "Add your description here"
+description = "A command-line medical chatbot powered by Mistral AI and RAG using the MedQuAD dataset."
 readme = "README.md"
-requires-python = ">=3.8"
+requires-python = ">=3.10"
 dependencies = [
+    "chromadb>=1.5.7",
+    "langchain>=1.2.15",
+    "langchain-chroma>=1.1.0",
+    "langchain-community>=0.4.1",
+    "langchain-huggingface>=1.2.1",
+    "langchain-text-splitters>=1.1.1",
     "lxml>=6.0.3",
-    "mistralai>=1.5.2",
+    "mistralai>=1.5.2,<2.0.0",
     "python-dotenv>=1.0.1",
+    "sentence-transformers>=5.4.0",
 ]
 
 [dependency-groups]

@@ -60,7 +60,8 @@ def parse_medquad_file(filepath):
             answer = qa.findtext("Answer", "").strip()
 
             if question and answer:
-                content.append(f"Q: {question}\nA: {answer}")
+                # Keep Q&A together in one block so they stay in the same chunk
+                content.append(f"Question: {question}\nAnswer: {answer}\n---")
 
         return "\n\n".join(content)
 
