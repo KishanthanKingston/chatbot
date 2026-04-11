@@ -14,6 +14,7 @@ dependencies = [
     "lxml>=6.0.3",
     "mistralai>=1.5.2,<2.0.0",
     "python-dotenv>=1.0.1",
+    "rich>=14.3.4",
     "sentence-transformers>=5.4.0",
 ]
 

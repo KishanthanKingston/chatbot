@@ -23,6 +23,12 @@ import sys
 from mistralai import Mistral
 from dotenv import load_dotenv
 from src.rag import get_context
+from rich.console import Console
+from rich.markdown import Markdown
+from rich.prompt import Prompt
+
+# Initialize the Rich console for styled terminal output
+console = Console()
 
 # Load environment variables from the .env file into os.environ,
 # so os.environ.get("MISTRAL_API_KEY") can find the key automatically
@@ -50,8 +56,10 @@ def create_client():
     """
     api_key = os.environ.get("MISTRAL_API_KEY")
     if not api_key:
-        print("Error: MISTRAL_API_KEY environment variable is missing.")
-        print("Export your key: export MISTRAL_API_KEY='your_key'")
+        console.print(
+            "Error: MISTRAL_API_KEY environment variable is missing.", style="bold red"
+        )
+        console.print("Export your key: export MISTRAL_API_KEY='your_key'", style="red")
         sys.exit(1)
     return Mistral(api_key=api_key)
 
@@ -153,25 +161,33 @@ def main(vectorstore):
         - Provide clear and accurate information based on established medical knowledge
         - Always recommend consulting a healthcare professional for diagnosis or treatment
         - Refuse to answer non-medical questions politely
+        - Always respond in the same language as the user's question
+          - For example, if the user writes in Tamil, respond in Tamil.
+          - If the user writes in French, respond in French.
+          - Never switch to English unless the user writes in English.
 
         Important rules:
         - Never diagnose a patient
         - Never recommend a specific dosage
         - Always add a disclaimer when discussing serious conditions
-        - If the user describes an emergency, tell them to call 911 immediately
+        - If the user describes an emergency, tell them to call the local emergency number:
+          15 (SAMU) or 15 in France, 112 in Europe, 911 in North America
         """,
         }
     ]
 
-    print("=== Mistral Medical Chatbot ===")
-    print("Type 'exit' or 'quit' to quit, 'reset' to clear history.\n")
+    console.print("=== Mistral Medical Chatbot ===", style="bold cyan")
+    console.print(
+        "Type 'exit' or 'quit' to quit, 'reset' to clear history.\n", style="dim"
+    )
 
     while True:
         try:
-            user_input = input("You: ").strip()
+            # Rich prompt for styled user input
+            user_input = Prompt.ask("[bold cyan]You[/bold cyan]").strip()
         except (KeyboardInterrupt, EOFError):
             # Gracefully handle Ctrl+C and Ctrl+D
-            print("\nGoodbye!")
+            console.print("\nGoodbye!", style="bold")
             break
 
         if not user_input:
@@ -179,22 +195,24 @@ def main(vectorstore):
             continue
 
         if user_input.lower() in ("exit", "quit"):
-            print("Goodbye!")
+            console.print("Goodbye!", style="bold")
             break
 
         if user_input.lower() == "reset":
             # Keep only the system message (index 0) to start a fresh conversation
             history = history[:1]
-            print("History cleared.\n")
+            console.print("History cleared.\n", style="green")
             continue
 
         try:
             reply = chat(client, history, user_input, vectorstore)
-            print(f"\nAssistant: {reply}\n")
+            console.print("\n[bold green]Assistant:[/bold green]")
+            console.print(Markdown(reply))
+            console.print()
         except Exception as e:
             # Catch API errors (network issues, invalid key, rate limits…)
             # without crashing the whole program
-            print(f"API error: {e}\n")
+            console.print(f"API error: {e}", style="bold red")
 
 
 if __name__ == "__main__":
