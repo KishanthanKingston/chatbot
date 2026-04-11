@@ -1,16 +1,29 @@
-Mistral Medical Chatbot CLI
+# 🩺 Mistral Medical Chatbot CLI
 
-A command-line medical chatbot powered by the Mistral AI API and RAG (Retrieval Augmented Generation) using the MedQuAD dataset.
+A powerful **command-line medical chatbot** built with the Mistral AI API and enhanced with **RAG (Retrieval-Augmented Generation)** using the MedQuAD dataset.
 
-Requirements
+---
 
-Python 3.8+
+## Features
 
-uv package manager
+- Interactive CLI chatbot
+- Context-aware conversations (chat history)
+- RAG pipeline powered by medical data
+- Fast setup with `uv`
+- Focused on general medical information
 
-A Mistral API key (console.mistral.ai)
+---
 
-Installation
+## Requirements
+
+- Python 3.8+
+- [`uv`](https://github.com/astral-sh/uv) package manager
+- A Mistral API key → https://console.mistral.ai
+
+---
+
+## Installation
+
 ```bash
 # Clone the repository
 git clone https://github.com/KishanthanKingston/chatbot.git
@@ -20,11 +33,14 @@ cd chatbot
 uv sync
 ```
 
-Data Setup
+---
 
-This project uses the MedQuAD dataset for RAG. Clone it and convert the XML files to plain text:
+## Data Setup
+
+This project uses the **MedQuAD dataset** for the RAG pipeline.
+
 ```bash
-# Clone the MedQuAD dataset
+# Clone the dataset
 cd data
 git clone https://github.com/abachaa/MedQuAD.git
 cd ..
@@ -33,46 +49,69 @@ cd ..
 uv run src/prepare_data.py
 ```
 
-Configuration
+---
+
+## Configuration
 
 Create a `.env` file at the root of the project:
-```
+
+```env
 MISTRAL_API_KEY=your_key_here
 ```
 
-Usage
+---
+
+## Usage
+
 ```bash
 uv run main.py
 ```
 
-Available commands
+---
 
-Command	Action
+## Available Commands
 
-`reset`	Clear the conversation history
+| Command         | Description                      |
+|-----------------|----------------------------------|
+| `reset`         | Clear conversation history       |
+| `exit` / `quit` | Exit the chatbot                 |
+| `Ctrl+C`        | Force exit                       |
 
-`exit` / `quit`	Quit the program
+---
 
-`Ctrl+C`	Quit the program
+## Project Structure
 
-Project Structure
-```
+```text
 chatbot/
 ├── data/
 │   ├── MedQuAD/          # MedQuAD dataset
-│   ├── medical_docs/     # Converted .txt files
+│   ├── medical_docs/     # Processed text files
 ├── src/
-│   ├── chatbot.py        # Main chatbot logic
+│   ├── chatbot.py        # Chat logic
 │   ├── rag.py            # RAG pipeline
-│   └── prepare_data.py   # MedQuAD XML to .txt converter
+│   └── prepare_data.py   # XML (text converter)
 ├── main.py
-├── .gitignore
-├── pyproject.toml        # Project dependencies
+├── pyproject.toml
 ├── uv.lock
 └── README.md
 ```
 
-Data
+---
 
-This project uses the MedQuAD dataset
-by Asma Ben Abacha and Dina Demner-Fushman, licensed under CC BY 4.0.
+## Data Source
+
+This project uses the **MedQuAD dataset**
+by *Asma Ben Abacha* and *Dina Demner-Fushman*,
+licensed under **CC BY 4.0**.
+
+---
+
+## License
+
+This project is licensed under the **MIT**.
+
+---
+
+## Author
+
+**Kishanthan Kingston**
