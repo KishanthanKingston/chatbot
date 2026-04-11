@@ -20,7 +20,7 @@ MISTRAL_API_KEY=your_key_here
 ```
 Usage
 ```bash
-uv run src/chatbot.py
+uv run main.py
 ```
 Available commands
 Command	Action

@@ -1,3 +1,23 @@
+# Mistral Chatbot CLI.
+#
+# Author
+# ------
+# Kishanthan Kingston
+#
+# Copyright
+# ---------
+# © 2026 Kishanthan Kingston
+#
+# License
+# -------
+# MIT
+#
+# Description
+# -----------
+# Interactive command-line chatbot powered by the Mistral API with
+# conversation memory support.
+
+
 import os
 import sys
 from mistralai import Mistral
@@ -13,8 +33,22 @@ load_dotenv()
 def create_client():
     """
     Reads the API key from the environment and returns an authenticated Mistral client.
-    Exits immediately if the key is missing to avoid cryptic errors later.
+
+    This function retrieves the API key from the ``MISTRAL_API_KEY`` environment
+    variable and initializes a Mistral client. If the API key is not found, the
+    program exits immediately with an error message.
+
+    Returns
+    -------
+    Mistral
+        An authenticated Mistral client instance.
+
+    Raises
+    ------
+    SystemExit
+        If the ``MISTRAL_API_KEY`` environment variable is not set.
     """
+
     api_key = os.environ.get("MISTRAL_API_KEY")
     if not api_key:
         print("Error: MISTRAL_API_KEY environment variable is missing.")
@@ -25,11 +59,32 @@ def create_client():
 
 def chat(client, history, user_input):
     """
-    Sends the full conversation history to the Mistral API and returns the reply.
+    Send a conversation history to the Mistral API and return the assistant's reply.
 
-    The history is a list of messages with a 'role' (system / user / assistant)
-    and a 'content'. Sending the full history on every call is what gives the
-    model its memory of the conversation.
+    The function appends the user's input to the conversation history, sends the
+    full history to the API, and then appends the assistant's response to maintain
+    conversational context across multiple turns.
+
+    Parameters
+    ----------
+    client : Mistral
+        An authenticated Mistral client instance.
+    history : list of dict
+        The conversation history. Each message is a dictionary with the keys
+        "role" (e.g., "system", "user", "assistant") and
+        "content" (str).
+    user_input : str
+        The user's input message.
+
+    Returns
+    -------
+    str
+        The assistant's reply extracted from the API response.
+
+    Raises
+    ------
+    Exception
+        Propagates any exception raised by the API call.
     """
     # Add the user's message to the history before sending
     history.append({"role": "user", "content": user_input})
@@ -49,12 +104,32 @@ def chat(client, history, user_input):
 
 
 def main():
+    """
+    Run an interactive command-line chatbot using the Mistral API.
+
+    This function initializes the client, sets up the initial system prompt,
+    and enters a loop to handle user input. Special commands allow the user to
+    exit the program or reset the conversation history.
+
+    Notes
+    -----
+    Supported commands:
+    - ``exit`` or ``quit``: Exit the program.
+    - ``reset``: Clear conversation history while preserving the system prompt.
+
+    The chatbot maintains context by sending the full conversation history
+    with each API request.
+    """
+
     client = create_client()
 
     # The system message sets the assistant's behavior for the whole conversation.
     # It is always kept as the first element of the history (see 'reset' below).
     history = [
-        {"role": "system", "content": "You are a helpful and concise assistant."}
+        {
+            "role": "system",
+            "content": "You are a medical assistant. You provide clear and accurate general medical information based on established knowledge. Always remind the user that your answers are for informational purposes only and do not replace the advice of a qualified healthcare professional.",
+        }
     ]
 
     print("=== Mistral Chatbot ===")
