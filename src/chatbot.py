@@ -26,6 +26,10 @@ from src.rag import get_context
 from rich.console import Console
 from rich.markdown import Markdown
 from rich.prompt import Prompt
+from langdetect import detect, DetectorFactory
+
+# Make language detection deterministic across all calls
+DetectorFactory.seed = 0
 
 # Initialize the Rich console for styled terminal output
 console = Console()
@@ -68,10 +72,9 @@ def chat(client, history, user_input, vectorstore):
     """
     Send a conversation history to the Mistral API and return the assistant's reply.
 
-    The function retrieves relevant medical context from the vector store,
-    injects it into the user message, appends it to the conversation history,
-    sends the full history to the API, and then appends the assistant's response
-    to maintain conversational context across multiple turns.
+    The function detects the language of the user's input, retrieves relevant
+    medical context from the vector store, injects both into the user message,
+    and maintains conversational context across multiple turns.
 
     Parameters
     ----------
@@ -99,14 +102,32 @@ def chat(client, history, user_input, vectorstore):
     # Retrieve relevant medical context from the vector store
     context = get_context(vectorstore, user_input)
 
-    # Inject the context into the user message so the model can use it
-    augmented_input = f"""Use the following medical information to answer the question.
+    # Detect the language of the user's message for each turn independently.
+    # For short inputs or unreliable detection, let the model handle language matching.
+    try:
+        if len(user_input) >= 30:
+            detected_lang = detect(user_input)
+            lang_instruction = f"You must respond in language code: {detected_lang}."
+        else:
+            lang_instruction = "Identify the language of the question and respond in that same language."
+    except Exception:
+        lang_instruction = (
+            "Identify the language of the question and respond in that same language."
+        )
+
+    # Inject context and language instruction into the user message
+    augmented_input = f"""{lang_instruction}
+If the question is written in transliterated Tamil (Tamil words written in Latin script), respond in Tamil script.
+
+Use the following medical information to answer the question.
 If the context is not relevant, rely on your general medical knowledge.
 
 Context:
 {context}
 
-Question: {user_input}"""
+Question: {user_input}
+
+Important: Your entire response must match the language of the question."""
 
     # Add the augmented message to the history before sending
     history.append({"role": "user", "content": augmented_input})
@@ -161,10 +182,8 @@ def main(vectorstore):
         - Provide clear and accurate information based on established medical knowledge
         - Always recommend consulting a healthcare professional for diagnosis or treatment
         - Refuse to answer non-medical questions politely
-        - Always respond in the same language as the user's question
-          - For example, if the user writes in Tamil, respond in Tamil.
-          - If the user writes in French, respond in French.
-          - Never switch to English unless the user writes in English.
+        - Detect the language of each user message and always reply in that exact same language.
+          Default to English if the language cannot be determined.
 
         Important rules:
         - Never diagnose a patient

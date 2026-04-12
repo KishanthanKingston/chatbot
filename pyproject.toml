@@ -11,6 +11,7 @@ dependencies = [
     "langchain-community>=0.4.1",
     "langchain-huggingface>=1.2.1",
     "langchain-text-splitters>=1.1.1",
+    "langdetect>=1.0.9",
     "lxml>=6.0.3",
     "mistralai>=1.5.2,<2.0.0",
     "python-dotenv>=1.0.1",
