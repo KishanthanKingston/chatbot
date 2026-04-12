@@ -1,16 +1,18 @@
 # 🩺 Mistral Medical Chatbot CLI
 
-A powerful **command-line medical chatbot** built with the Mistral AI API and enhanced with **RAG (Retrieval-Augmented Generation)** using the MedQuAD dataset.
+A **command-line medical chatbot** built with the Mistral AI API and enhanced with **RAG (Retrieval-Augmented Generation)** using the MedQuAD dataset.
 
 ---
 
 ## Features
 
-- Interactive CLI chatbot
+- Interactive CLI chatbot with Rich terminal styling
 - Context-aware conversations (chat history)
-- RAG pipeline powered by medical data
+- RAG pipeline powered by MedQuAD medical data
+- Automatic language detection (English, French, Spanish, and more)
 - Fast setup with `uv`
 - Focused on general medical information
+- Unit tested with `pytest`
 
 ---
 
@@ -23,7 +25,6 @@ A powerful **command-line medical chatbot** built with the Mistral AI API and en
 ---
 
 ## Installation
-
 ```bash
 # Clone the repository
 git clone https://github.com/KishanthanKingston/chatbot.git
@@ -38,7 +39,6 @@ uv sync
 ## Data Setup
 
 This project uses the **MedQuAD dataset** for the RAG pipeline.
-
 ```bash
 # Clone the dataset
 cd data
@@ -48,7 +48,7 @@ cd ..
 # Convert XML files to plain text
 uv run src/prepare_data.py
 
-# Build the vector database
+# Build the vector database (recommended: use a GPU)
 uv run src/rag.py
 ```
 
@@ -57,7 +57,6 @@ uv run src/rag.py
 ## Configuration
 
 Create a `.env` file at the root of the project:
-
 ```env
 MISTRAL_API_KEY=your_key_here
 ```
@@ -65,7 +64,6 @@ MISTRAL_API_KEY=your_key_here
 ---
 
 ## Usage
-
 ```bash
 uv run main.py
 ```
@@ -82,8 +80,25 @@ uv run main.py
 
 ---
 
-## Project Structure
+## Language Support
 
+The chatbot automatically detects the language of your message and responds accordingly.
+
+**Supported languages:** English, French, Spanish, German, and most Latin-script languages.
+
+**Limitation:** Transliterated Tamil (Tamil written in Latin script) is not reliably detected.
+For best results in Tamil, use Tamil script.
+
+---
+
+## Running Tests
+```bash
+uv run pytest tests/ -v
+```
+
+---
+
+## Project Structure
 ```text
 chatbot/
 ├── data/
@@ -91,9 +106,12 @@ chatbot/
 │   ├── medical_docs/     # Processed text files
 │   └── chroma_db/        # Vector database
 ├── src/
-│   ├── chatbot.py        # Chat logic
+│   ├── chatbot.py        # Chat logic with RAG and language detection
 │   ├── rag.py            # RAG pipeline
-│   └── prepare_data.py   # XML (text converter)
+│   └── prepare_data.py   # MedQuAD XML to text converter
+├── tests/
+│   ├── test_chatbot.py   # Unit tests for chatbot logic
+│   └── test_rag.py       # Unit tests for RAG pipeline
 ├── main.py
 ├── pyproject.toml
 ├── uv.lock
