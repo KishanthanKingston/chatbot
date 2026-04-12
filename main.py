@@ -14,17 +14,46 @@
 #
 # Description
 # -----------
-# Entry point for the Mistral Medical Chatbot CLI.
-# Handles Python version check, banner display,
+# Entry point for the Medical Chatbot CLI.
+# Handles Python version check, banner display, model selection,
 # and vector store initialization before starting the chatbot.
 
 import os
 import sys
+import argparse
 from src.chatbot import main
 from src.rag import build_vectorstore, load_vectorstore
+from src.providers import mistral_provider, gemini_provider
 
 # Path where the ChromaDB vector database is stored on disk
 DB_PATH = "data/chroma_db"
+
+# Available providers mapped to their modules
+PROVIDERS = {
+    "mistral": mistral_provider,
+    "gemini": gemini_provider,
+}
+
+
+def parse_args():
+    """
+    Parse command-line arguments.
+
+    Returns
+    -------
+    argparse.Namespace
+        Parsed arguments containing the selected model.
+    """
+    parser = argparse.ArgumentParser(
+        description="Medical Chatbot CLI powered by Mistral or Gemini."
+    )
+    parser.add_argument(
+        "--model",
+        choices=["mistral", "gemini"],
+        default="gemini",
+        help="LLM provider to use (default: gemini)",
+    )
+    return parser.parse_args()
 
 
 def check_python_version():
@@ -34,10 +63,17 @@ def check_python_version():
         sys.exit(1)
 
 
-def print_banner():
-    """Display a welcome banner when the chatbot starts."""
+def print_banner(model_name):
+    """
+    Display a welcome banner when the chatbot starts.
+
+    Parameters
+    ----------
+    model_name : str
+        The name of the selected model (mistral or gemini).
+    """
     print("=" * 40)
-    print("       Mistral Medical Chatbot")
+    print(f"    Medical Chatbot [{model_name.capitalize()}]")
     print("=" * 40)
     print("  Your AI-powered medical assistant")
     print("  Type 'exit' to quit, 'reset' to")
@@ -47,8 +83,12 @@ def print_banner():
 
 
 if __name__ == "__main__":
+    args = parse_args()
     check_python_version()
-    print_banner()
+    print_banner(args.model)
+
+    # Select the provider based on the --model argument
+    provider = PROVIDERS[args.model]
 
     # Build the vector store if it doesn't exist yet (first run),
     # otherwise load the existing one from disk to save time.
@@ -64,4 +104,4 @@ if __name__ == "__main__":
         vectorstore = load_vectorstore()
         print("Ready.\n")
 
-    main(vectorstore)
+    main(vectorstore, provider)

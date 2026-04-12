@@ -18,9 +18,6 @@
 # conversation memory support and RAG pipeline.
 
 
-import os
-import sys
-from mistralai import Mistral
 from dotenv import load_dotenv
 from src.rag import get_context
 from rich.console import Console
@@ -40,37 +37,9 @@ console = Console()
 load_dotenv()
 
 
-def create_client():
+def chat(client, provider, history, user_input, vectorstore):
     """
-    Reads the API key from the environment and returns an authenticated Mistral client.
-
-    This function retrieves the API key from the ``MISTRAL_API_KEY`` environment
-    variable and initializes a Mistral client. If the API key is not found, the
-    program exits immediately with an error message.
-
-    Returns
-    -------
-    Mistral
-        An authenticated Mistral client instance.
-
-    Raises
-    ------
-    SystemExit
-        If the ``MISTRAL_API_KEY`` environment variable is not set.
-    """
-    api_key = os.environ.get("MISTRAL_API_KEY")
-    if not api_key:
-        console.print(
-            "Error: MISTRAL_API_KEY environment variable is missing.", style="bold red"
-        )
-        console.print("Export your key: export MISTRAL_API_KEY='your_key'", style="red")
-        sys.exit(1)
-    return Mistral(api_key=api_key)
-
-
-def chat(client, history, user_input, vectorstore):
-    """
-    Send a conversation history to the Mistral API and return the assistant's reply.
+    Send a conversation history to the selected provider and return the reply.
 
     The function detects the language of the user's input, retrieves relevant
     medical context from the vector store, injects both into the user message,
@@ -78,12 +47,12 @@ def chat(client, history, user_input, vectorstore):
 
     Parameters
     ----------
-    client : Mistral
-        An authenticated Mistral client instance.
+    client : object
+        An authenticated client instance (Mistral or Gemini).
+    provider : module
+        The provider module (mistral_provider or gemini_provider).
     history : list of dict
-        The conversation history. Each message is a dictionary with the keys
-        "role" (e.g., "system", "user", "assistant") and
-        "content" (str).
+        The conversation history.
     user_input : str
         The user's input message.
     vectorstore : Chroma
@@ -93,11 +62,6 @@ def chat(client, history, user_input, vectorstore):
     -------
     str
         The assistant's reply extracted from the API response.
-
-    Raises
-    ------
-    Exception
-        Propagates any exception raised by the API call.
     """
     # Retrieve relevant medical context from the vector store
     context = get_context(vectorstore, user_input)
@@ -132,13 +96,8 @@ Important: Your entire response must match the language of the question."""
     # Add the augmented message to the history before sending
     history.append({"role": "user", "content": augmented_input})
 
-    response = client.chat.complete(
-        model="mistral-small-latest",
-        messages=history,
-    )
-
-    # Extract the text reply from the API response
-    reply = response.choices[0].message.content
+    # Use the provider's generate function to get the reply
+    reply = provider.generate(client, history)
 
     # Store the assistant's reply so the model can reference it in future turns
     history.append({"role": "assistant", "content": reply})
@@ -146,29 +105,25 @@ Important: Your entire response must match the language of the question."""
     return reply
 
 
-def main(vectorstore):
+def main(vectorstore, provider):
     """
-    Run an interactive command-line chatbot using the Mistral API.
-
-    This function initializes the client, sets up the initial system prompt,
-    and enters a loop to handle user input. Special commands allow the user to
-    exit the program or reset the conversation history.
+    Run an interactive command-line chatbot using the selected provider.
 
     Parameters
     ----------
     vectorstore : Chroma
         The vector store used to retrieve relevant medical context.
+    provider : module
+        The provider module to use (mistral_provider or gemini_provider).
 
     Notes
     -----
     Supported commands:
     - ``exit`` or ``quit``: Exit the program.
     - ``reset``: Clear conversation history while preserving the system prompt.
-
-    The chatbot maintains context by sending the full conversation history
-    with each API request.
     """
-    client = create_client()
+    # Initialize the client using the selected provider
+    client = provider.create_client()
 
     # The system message sets the assistant's behavior for the whole conversation.
     # It is always kept as the first element of the history (see 'reset' below).
@@ -195,7 +150,11 @@ def main(vectorstore):
         }
     ]
 
-    console.print("=== Mistral Medical Chatbot ===", style="bold cyan")
+    # Display the chatbot name with the active provider
+    provider_name = (
+        provider.__name__.split(".")[-1].replace("_provider", "").capitalize()
+    )
+    console.print(f"=== {provider_name} Medical Chatbot ===", style="bold cyan")
     console.print(
         "Type 'exit' or 'quit' to quit, 'reset' to clear history.\n", style="dim"
     )
@@ -224,7 +183,7 @@ def main(vectorstore):
             continue
 
         try:
-            reply = chat(client, history, user_input, vectorstore)
+            reply = chat(client, provider, history, user_input, vectorstore)
             console.print("\n[bold green]Assistant:[/bold green]")
             console.print(Markdown(reply))
             console.print()
@@ -238,5 +197,6 @@ if __name__ == "__main__":
     # Only run main() when the script is executed directly,
     # not when imported as a module
     from src.rag import load_vectorstore
+    from src.providers import mistral_provider
 
-    main(load_vectorstore())
+    main(load_vectorstore(), mistral_provider)
