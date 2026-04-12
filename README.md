@@ -13,6 +13,7 @@ A **command-line medical chatbot** built with the Mistral AI API and enhanced wi
 - Fast setup with `uv`
 - Focused on general medical information
 - Unit tested with `pytest`
+- CI/CD pipeline with GitHub Actions
 
 ---
 
@@ -112,6 +113,9 @@ chatbot/
 ├── tests/
 │   ├── test_chatbot.py   # Unit tests for chatbot logic
 │   └── test_rag.py       # Unit tests for RAG pipeline
+├── .github/
+│   └── workflows/
+│       └── ci.yml        # GitHub Actions CI pipeline
 ├── main.py
 ├── pyproject.toml
 ├── uv.lock
