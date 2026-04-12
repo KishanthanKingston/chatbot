@@ -1,6 +1,6 @@
-# 🩺 Mistral Medical Chatbot CLI
+# 🩺 Medical Chatbot CLI
 
-A **command-line medical chatbot** built with the Mistral AI API and enhanced with **RAG (Retrieval-Augmented Generation)** using the MedQuAD dataset.
+A **command-line medical chatbot** built with Mistral AI or Google Gemini, enhanced with **RAG (Retrieval-Augmented Generation)** using the MedQuAD dataset.
 
 ---
 
@@ -9,7 +9,8 @@ A **command-line medical chatbot** built with the Mistral AI API and enhanced wi
 - Interactive CLI chatbot with Rich terminal styling
 - Context-aware conversations (chat history)
 - RAG pipeline powered by MedQuAD medical data
-- Automatic language detection (English, French, Spanish, and more)
+- Automatic language detection (English, French, Tamil, and more)
+- Multi-provider support: Mistral and Gemini
 - Fast setup with `uv`
 - Focused on general medical information
 - Unit tested with `pytest`
@@ -22,10 +23,12 @@ A **command-line medical chatbot** built with the Mistral AI API and enhanced wi
 - Python 3.10+
 - [`uv`](https://github.com/astral-sh/uv) package manager
 - A Mistral API key → https://console.mistral.ai
+- A Google Gemini API key → https://aistudio.google.com
 
 ---
 
 ## Installation
+
 ```bash
 # Clone the repository
 git clone https://github.com/KishanthanKingston/chatbot.git
@@ -40,6 +43,7 @@ uv sync
 ## Data Setup
 
 This project uses the **MedQuAD dataset** for the RAG pipeline.
+
 ```bash
 # Clone the dataset
 cd data
@@ -58,15 +62,22 @@ uv run src/rag.py
 ## Configuration
 
 Create a `.env` file at the root of the project:
+
 ```env
-MISTRAL_API_KEY=your_key_here
+MISTRAL_API_KEY=your_mistral_key_here
+GOOGLE_API_KEY=your_gemini_key_here
 ```
 
 ---
 
 ## Usage
+
 ```bash
+# Run with Gemini (default)
 uv run main.py
+
+# Run with Mistral
+uv run main.py --model mistral
 ```
 
 ---
@@ -85,14 +96,15 @@ uv run main.py
 
 The chatbot automatically detects the language of your message and responds accordingly.
 
-**Supported languages:** English, French, Spanish, German, and most Latin-script languages.
+**Supported languages:** English, French, Spanish, German, Tamil, and more.
 
-**Limitation:** Transliterated Tamil (Tamil written in Latin script) is not reliably detected.
-For best results in Tamil, use Tamil script.
+**Note:** For best results in Tamil, use Tamil script with Gemini.
+Gemini 2.5 Flash also handles transliterated Tamil better than Mistral Small.
 
 ---
 
 ## Running Tests
+
 ```bash
 uv run pytest tests/ -v
 ```
@@ -100,22 +112,26 @@ uv run pytest tests/ -v
 ---
 
 ## Project Structure
+
 ```text
 chatbot/
 ├── data/
-│   ├── MedQuAD/          # MedQuAD dataset
-│   ├── medical_docs/     # Processed text files
-│   └── chroma_db/        # Vector database
+│   ├── MedQuAD/              # MedQuAD dataset
+│   ├── medical_docs/         # Processed text files
+│   └── chroma_db/            # Vector database
 ├── src/
-│   ├── chatbot.py        # Chat logic with RAG and language detection
-│   ├── rag.py            # RAG pipeline
-│   └── prepare_data.py   # MedQuAD XML to text converter
+│   ├── providers/
+│   │   ├── mistral_provider.py   # Mistral AI provider
+│   │   └── gemini_provider.py    # Google Gemini provider
+│   ├── chatbot.py            # Chat logic with RAG and language detection
+│   ├── rag.py                # RAG pipeline
+│   └── prepare_data.py       # MedQuAD XML to text converter
 ├── tests/
-│   ├── test_chatbot.py   # Unit tests for chatbot logic
-│   └── test_rag.py       # Unit tests for RAG pipeline
+│   ├── test_chatbot.py       # Unit tests for chatbot logic
+│   └── test_rag.py           # Unit tests for RAG pipeline
 ├── .github/
 │   └── workflows/
-│       └── ci.yml        # GitHub Actions CI pipeline
+│       └── ci.yml            # GitHub Actions CI pipeline
 ├── main.py
 ├── pyproject.toml
 ├── uv.lock
